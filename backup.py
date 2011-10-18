@@ -2,6 +2,7 @@
 import bitbucket
 import os
 import optparse
+from getpass import getpass
 
 def clone_repo(repo, backup_dir, password):
     scm = repo.get('scm')
@@ -13,7 +14,7 @@ def clone_repo(repo, backup_dir, password):
         command = 'hg clone ssh://hg@bitbucket.org/%s/%s %s' % (username, slug, backup_dir)
     if scm == 'git':
         #command = "git clone https://%s:%s@bitbucket.org/%s/%s.git %s" % (username, password, username, slug, backup_dir)
-        command = "git clone git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
+        command = "git clone --mirror git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
     if not command:
         return
     os.system(command)
@@ -43,8 +44,10 @@ if __name__ == "__main__":
     username = options.username
     password = options.password
     location = options.location
-    if not username or not password or not location:
-        parser.error('Please supply a username, password and backup location (-u <username> -p <password> -l <backup location>)')
+    if not password:
+        password = getpass(prompt='Enter your bitbucket password: ')
+    if not username or not location:
+        parser.error('Please supply a username and backup location (-u <username> -l <backup location>)')
     if not os.path.isdir(location):
         print "Backup location does not exist.  Please provide an existing directory."
     bb = bitbucket.BitBucket(username, password)
