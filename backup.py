@@ -14,7 +14,8 @@ def clone_repo(repo, backup_dir, password):
         command = 'hg clone ssh://hg@bitbucket.org/%s/%s %s' % (username, slug, backup_dir)
     if scm == 'git':
         #command = "git clone https://%s:%s@bitbucket.org/%s/%s.git %s" % (username, password, username, slug, backup_dir)
-        command = "git clone --mirror git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
+        #command = "git clone --mirror git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
+        command = "git clone git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
     if not command:
         return
     os.system(command)
