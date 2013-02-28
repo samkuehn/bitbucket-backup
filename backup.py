@@ -46,11 +46,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")
     parser.add_argument("-u", "--username", dest="username", help="Bitbucket username")
     parser.add_argument("-p", "--password", dest="password", help="Bitbucket password")
+    parser.add_argument("-t", "--team", dest="team", help="Bitbucket team")
     parser.add_argument("-l", "--location", dest="location", help="Local backup location")
     parser.add_argument('--http', action='store_true', help="Fetch via https")
     args = parser.parse_args()
     username = args.username
     password = args.password
+    owner = args.team if args.team else username
     location = args.location
     http = args.http
     if not password:
@@ -60,7 +62,7 @@ if __name__ == "__main__":
     if not os.path.isdir(location):
         print "Backup location does not exist.  Please provide an existing directory."
     bb = bitbucket.BitBucket(username, password)
-    user = bb.user(username)
+    user = bb.user(owner)
     repos = user.repositories()
     if not repos:
         print "No repositories found.  Are you sure you provided the correct password"
