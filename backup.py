@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+
 import bitbucket
 import os
 import argparse
 from getpass import getpass
+
 
 def clone_repo(repo, backup_dir, http, password):
     scm = repo.get('scm')
@@ -28,8 +30,6 @@ def clone_repo(repo, backup_dir, http, password):
 
 def update_repo(repo, backup_dir):
     scm = repo.get('scm')
-    slug = repo.get('slug')
-    username = repo.get('owner')
     command = None
     os.chdir(backup_dir)
     if scm == 'hg':
@@ -40,6 +40,7 @@ def update_repo(repo, backup_dir):
         return
     print command
     os.system(command)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")

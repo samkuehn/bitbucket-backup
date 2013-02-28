@@ -23,8 +23,10 @@ __all__ = ['AuthenticationRequired', 'to_datetime', 'BitBucket']
 api_base = 'https://api.bitbucket.org/1.0/'
 api_toplevel = 'https://api.bitbucket.org/'
 
+
 class AuthenticationRequired(Exception):
     pass
+
 
 def requires_authentication(method):
     @wraps(method)
@@ -36,22 +38,25 @@ def requires_authentication(method):
         return method(self, *args, **kwargs)
     return wrapper
 
+
 def smart_encode(**kwargs):
     """Urlencode's provided keyword arguments.  If any kwargs are None, it does
     not include those."""
     args = dict(kwargs)
-    for k,v in args.items():
+    for k, v in args.items():
         if v is None:
             del args[k]
     if not args:
         return ''
     return urlencode(args)
 
+
 def to_datetime(timestring):
     """Convert one of the bitbucket API's timestamps to a datetime object."""
     format = '%Y-%m-%d %H:%M:%S'
     timestring = timestring.split('+')[0].strip()
     return datetime.datetime(*time.strptime(timestring, format)[:7])
+
 
 class BitBucket(object):
     """Main bitbucket class.  Use an instantiated version of this class
@@ -105,6 +110,7 @@ class BitBucket(object):
             extra = ' (auth: %s)' % self.username
         return '<BitBucket API%s>' % extra
 
+
 class User(object):
     """API encapsulation for user related bitbucket queries."""
     def __init__(self, bb, username):
@@ -132,6 +138,7 @@ class User(object):
     def __repr__(self):
         return '<User: %s>' % self.username
 
+
 class Repository(object):
     def __init__(self, bb, username, slug):
         self.bb = bb
@@ -151,7 +158,8 @@ class Repository(object):
         """Get information about changesets on a repository."""
         url = self.base_url + 'changesets/'
         query = smart_encode(limit=limit)
-        if query: url += '?%s' % query
+        if query:
+            url += '?%s' % query
         return json.loads(self.bb.load_url(url, quiet=True))
 
     def tags(self):
@@ -170,7 +178,8 @@ class Repository(object):
     def issues(self, start=None, limit=None):
         url = self.base_url + 'issues/'
         query = smart_encode(start=start, limit=limit)
-        if query: url += '?%s' % query
+        if query:
+            url += '?%s' % query
         return json.loads(self.bb.load_url(url))
 
     def events(self):
@@ -180,7 +189,7 @@ class Repository(object):
     def followers(self):
         url = self.base_url + 'followers/'
         return json.loads(self.bb.load_url(url))
-    
+
     @requires_authentication
     def save(self, repo_data):
         url = self.base_url
@@ -188,6 +197,7 @@ class Repository(object):
 
     def __repr__(self):
         return '<Repository: %s\'s %s>' % (self.username, self.slug)
+
 
 class Issue(object):
     def __init__(self, bb, username, slug, number):
@@ -206,4 +216,3 @@ class Issue(object):
 
     def __repr__(self):
         return '<Issue #%s on %s\'s %s>' % (self.number, self.username, self.slug)
-
