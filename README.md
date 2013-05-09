@@ -7,12 +7,10 @@ If the repo does exist locally an `hg pull` will be run for mercurial repos,
 an `git remote update` will be run for git repos.
 
 ## Quickstart
-`python backup.py -u <bitbucket_username> -p <bitbucket_password> -l <local_backup_location> [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password]`
-
-* 
-* [-c] Compress
-* 
-
+```
+python backup.py -u <bitbucket_username> -l <local_backup_location>
+  [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password]`
+```
 The password is needed to access the bitbucket api's.  At this time it is not used to do the clone/update.
 Clone/update requires that your ssh keys have been uploaded to bitbucket.
 
