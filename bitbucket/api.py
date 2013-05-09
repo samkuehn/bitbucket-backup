@@ -20,8 +20,8 @@ except ImportError:
 
 __all__ = ['AuthenticationRequired', 'to_datetime', 'BitBucket']
 
-api_base = 'https://api.bitbucket.org/1.0/'
 api_toplevel = 'https://api.bitbucket.org/'
+api_base = '%s1.0/' % api_toplevel
 
 
 class AuthenticationRequired(Exception):
@@ -61,10 +61,10 @@ def to_datetime(timestring):
 class BitBucket(object):
     """Main bitbucket class.  Use an instantiated version of this class
     to make calls against the REST API."""
-    def __init__(self, username='', password=''):
+    def __init__(self, username='', password='', verbose=False):
         self.username = username
         self.password = password
-        # extended API support
+        self.verbose = verbose
 
     def build_request(self, url, method="GET", data=None):
         if not all((self.username, self.password)):
@@ -75,16 +75,13 @@ class BitBucket(object):
         request.get_method = lambda: method
         return request
 
-    def load_url(self, url, quiet=False, method="GET", data=None):
+    def load_url(self, url, method="GET", data=None):
+        if self.verbose:
+            print "Sending request to [%s]" % url
         request = self.build_request(url, method=method, data=data)
-        try:
-            result = urlopen(request).read()
-        except:
-            if not quiet:
-                import traceback
-                traceback.print_exc()
-                print "url was: %s" % url
-            result = "[]"
+        result = urlopen(request).read()
+        if self.verbose:
+            print "Response data: [%s]" % result
         return result
 
     def user(self, username):
@@ -160,7 +157,7 @@ class Repository(object):
         query = smart_encode(limit=limit)
         if query:
             url += '?%s' % query
-        return json.loads(self.bb.load_url(url, quiet=True))
+        return json.loads(self.bb.load_url(url))
 
     def tags(self):
         """Get a list of tags for a repository."""
