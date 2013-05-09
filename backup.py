@@ -8,8 +8,8 @@ import sys
 import datetime
 from urllib2 import HTTPError, URLError
 
-_verbose=False
-_quiet=False
+_verbose = False
+_quiet = False
 
 
 def debug(message, output_no_verbose=False):
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     _quiet = args.quiet
     _verbose = args.verbose
     if _quiet:
-        _verbose = False # override in case both are selected
+        _verbose = False  # override in case both are selected
     http = args.http
     if not password:
         if not args.skip_password:
@@ -145,15 +145,15 @@ if __name__ == "__main__":
         debug("Finished!", True)
     except HTTPError, err:
         if err.code == 401:
-            exit("Unauthorized! Check your credentials and try again.", 22) # EINVAL - Invalid argument
+            exit("Unauthorized! Check your credentials and try again.", 22)  # EINVAL - Invalid argument
         else:
             exit("Connection Error! Bitbucket returned HTTP error [%s]." % err.code)
     except URLError, e:
-        exit("Unable to reach Bitbucket: %s." % e.reason, 101) # ENETUNREACH - Network is unreachable
+        exit("Unable to reach Bitbucket: %s." % e.reason, 101)  # ENETUNREACH - Network is unreachable
     except (KeyboardInterrupt, SystemExit):
         exit("Operation cancelled. There might be inconsistent data in location directory.", 0)
     except:
         if not _quiet:
             import traceback
             traceback.print_exc()
-        exit("Unknown error.", 11) # EAGAIN - Try again
+        exit("Unknown error.", 11)  # EAGAIN - Try again
