@@ -1,4 +1,4 @@
-#Bitbuck backup
+#Bitbucket backup
 
 ## Description
 This python script will backup all of your bitbucket repos (both mercurial and git) locally.
