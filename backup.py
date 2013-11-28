@@ -59,7 +59,7 @@ def compress(repo, location):
             exec_cmd("rm -rfv %s" % path)
 
 
-def clone_repo(repo, backup_dir, http, password):
+def clone_repo(repo, backup_dir, http, password, mirror=False):
     global _quiet, _verbose
     scm = repo.get('scm')
     slug = repo.get('slug')
@@ -71,10 +71,13 @@ def clone_repo(repo, backup_dir, http, password):
         else:
             command = 'hg clone ssh://hg@bitbucket.org/%s/%s %s' % (username, slug, backup_dir)
     if scm == 'git':
+        git_command = 'git clone'
+        if mirror:
+            git_command = 'git clone --mirror'
         if http:
-            command = "git clone https://%s:%s@bitbucket.org/%s/%s.git %s" % (username, password, username, slug, backup_dir)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git %s" % (git_command, username, password, username, slug, backup_dir)
         else:
-            command = "git clone git@bitbucket.org:%s/%s.git %s" % (username, slug, backup_dir)
+            command = "%s git@bitbucket.org:%s/%s.git %s" % (git_command, username, slug, backup_dir)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
@@ -107,6 +110,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action='store_true', dest="verbose", help="Verbose output of all cloning commands")
     parser.add_argument("-q", "--quiet", action='store_true', dest="quiet", help="No output to stdout")
     parser.add_argument("-c", "--compress", action='store_true', dest="compress", help="Creates a compressed file with all cloned repositories (cleans up location directory)")
+    parser.add_argument('--mirror', action='store_true', help="Clone just bare repositories with git clone --mirror (git only)")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
     args = parser.parse_args()
@@ -116,6 +120,8 @@ if __name__ == "__main__":
     location = args.location
     _quiet = args.quiet
     _verbose = args.verbose
+    _verbose = args.verbose
+    _mirror = args.mirror
     if _quiet:
         _verbose = False  # override in case both are selected
     http = args.http
@@ -136,7 +142,7 @@ if __name__ == "__main__":
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
             if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, password)
+                clone_repo(repo, backup_dir, http, password, mirror=_mirror)
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
                 update_repo(repo, backup_dir)
