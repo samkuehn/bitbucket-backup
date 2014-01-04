@@ -126,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
+    parser.add_argument('--all', action='store_true', help="Backup all repositories, not just the ones owned by the user")
     args = parser.parse_args()
     username = args.username
     password = args.password
@@ -143,12 +144,16 @@ if __name__ == "__main__":
             password = getpass(prompt='Enter your bitbucket password: ')
     if not username or not location:
         parser.error('Please supply a username and backup location (-u <username> -l <backup location>)')
+    all = args.all
 
     # ok to proceed
     try:
         bb = bitbucket.BitBucket(username, password, _verbose)
         user = bb.user(owner)
-        repos = user.repositories()
+        if all:
+            repos = user.all_repositories()
+        else:
+            repos = user.repositories()
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:

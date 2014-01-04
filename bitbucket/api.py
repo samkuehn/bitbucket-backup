@@ -132,6 +132,10 @@ class User(object):
         user_data = self.get()
         return user_data['repositories']
 
+    def all_repositories(self):
+        url = api_base + 'user/repositories/'
+        return json.loads(self.bb.load_url(url))
+
     def events(self, start=None, limit=None):
         query = smart_encode(start=start, limit=limit)
         url = api_base + 'users/%s/events/' % self.username
