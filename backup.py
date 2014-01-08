@@ -6,7 +6,7 @@ import argparse
 from getpass import getpass
 import sys
 import datetime
-from urllib2 import HTTPError, URLError
+from urllib.error import HTTPError, URLError
 
 _verbose = False
 _quiet = False
@@ -18,7 +18,7 @@ def debug(message, output_no_verbose=False):
     """
     global _quiet, _verbose
     if not _quiet and (output_no_verbose or _verbose):
-        print "%s - %s" % (datetime.datetime.now(), message)
+        print(datetime.datetime.now(), "-", message)
 
 
 def exit(message, code=1):
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         user = bb.user(owner)
         repos = user.repositories()
         if not repos:
-            print "No repositories found. Are you sure you provided the correct password"
+            print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
@@ -149,12 +149,12 @@ if __name__ == "__main__":
         if args.compress:
             compress(repo, location)
         debug("Finished!", True)
-    except HTTPError, err:
+    except HTTPError as err:
         if err.code == 401:
             exit("Unauthorized! Check your credentials and try again.", 22)  # EINVAL - Invalid argument
         else:
             exit("Connection Error! Bitbucket returned HTTP error [%s]." % err.code)
-    except URLError, e:
+    except URLError as e:
         exit("Unable to reach Bitbucket: %s." % e.reason, 101)  # ENETUNREACH - Network is unreachable
     except (KeyboardInterrupt, SystemExit):
         exit("Operation cancelled. There might be inconsistent data in location directory.", 0)

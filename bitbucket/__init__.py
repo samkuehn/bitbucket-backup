@@ -1,4 +1,4 @@
 
 VERSION = "0.2"
 
-from api import *
+from bitbucket.api import *
