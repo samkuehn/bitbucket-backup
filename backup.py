@@ -145,7 +145,7 @@ if __name__ == "__main__":
             print "No repositories found. Are you sure you provided the correct password"
         for repo in repos:
             debug("Backing up [%s]..." % repo.get("name"), True)
-            backup_dir = os.path.join(location, repo.get("slug"))
+            backup_dir = os.path.join(location, repo.get("owner"), repo.get("slug"))
             if not os.path.isdir(backup_dir):
                 clone_repo(repo, backup_dir, http, password, mirror=_mirror)
             else:
