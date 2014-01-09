@@ -7,8 +7,14 @@ https://github.com/dustin/py-github
 
 """
 
-from urllib.request import Request, urlopen
-from urllib.parse import urlencode
+try:
+    from urllib.request import Request, urlopen
+except ImportError:
+    from urllib2 import Request, urlopen
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
 from functools import wraps
 import datetime
 import time

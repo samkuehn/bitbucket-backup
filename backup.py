@@ -6,7 +6,11 @@ import argparse
 from getpass import getpass
 import sys
 import datetime
-from urllib.error import HTTPError, URLError
+try:
+    from urllib.error import HTTPError, URLError
+except ImportError:
+    from urllib2 import HTTPError, URLError
+
 
 _verbose = False
 _quiet = False
