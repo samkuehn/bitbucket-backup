@@ -66,8 +66,10 @@ def to_datetime(timestring):
 
 
 class BitBucket(object):
+
     """Main bitbucket class.  Use an instantiated version of this class
     to make calls against the REST API."""
+
     def __init__(self, username='', password='', verbose=False):
         self.username = username
         self.password = password
@@ -84,11 +86,11 @@ class BitBucket(object):
 
     def load_url(self, url, method="GET", data=None):
         if self.verbose:
-            print("Sending request to [",url,"]")
+            print("Sending request to: [{}]".format(url))
         request = self.build_request(url, method=method, data=data)
         result = urlopen(request).read().decode("utf_8")
         if self.verbose:
-            print("Response data: [", result, "]")
+            print("Response data: [{}]".format(result))
         return result
 
     def user(self, username):
@@ -116,7 +118,9 @@ class BitBucket(object):
 
 
 class User(object):
+
     """API encapsulation for user related bitbucket queries."""
+
     def __init__(self, bb, username):
         self.bb = bb
         self.username = username
@@ -144,6 +148,7 @@ class User(object):
 
 
 class Repository(object):
+
     def __init__(self, bb, username, slug):
         self.bb = bb
         self.username = username
@@ -204,6 +209,7 @@ class Repository(object):
 
 
 class Issue(object):
+
     def __init__(self, bb, username, slug, number):
         self.bb = bb
         self.username = username
