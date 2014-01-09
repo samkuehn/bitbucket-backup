@@ -7,11 +7,12 @@ https://github.com/dustin/py-github
 
 """
 
-from urllib2 import Request, urlopen
-from urllib import urlencode
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode
 from functools import wraps
 import datetime
 import time
+import base64
 
 try:
     import json
@@ -70,18 +71,18 @@ class BitBucket(object):
         if not all((self.username, self.password)):
             return Request(url)
         auth = '%s:%s' % (self.username, self.password)
-        auth = {'Authorization': 'Basic %s' % (auth.encode('base64').strip())}
+        auth = {'Authorization': 'Basic %s' % (base64.b64encode(auth.encode("utf_8")).decode("utf_8").strip())}
         request = Request(url, data, auth)
         request.get_method = lambda: method
         return request
 
     def load_url(self, url, method="GET", data=None):
         if self.verbose:
-            print "Sending request to [%s]" % url
+            print("Sending request to [",url,"]")
         request = self.build_request(url, method=method, data=data)
-        result = urlopen(request).read()
+        result = urlopen(request).read().decode("utf_8")
         if self.verbose:
-            print "Response data: [%s]" % result
+            print("Response data: [", result, "]")
         return result
 
     def user(self, username):
