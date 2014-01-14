@@ -63,7 +63,7 @@ def compress(repo, location):
             exec_cmd("rm -rfv %s" % path)
 
 
-def clone_repo(repo, backup_dir, http, password, mirror=False):
+def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
     global _quiet, _verbose
     scm = repo.get('scm')
     slug = repo.get('slug')
@@ -71,24 +71,27 @@ def clone_repo(repo, backup_dir, http, password, mirror=False):
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s %s' % (username, password, username, slug, backup_dir)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, username, slug)
         else:
-            command = 'hg clone ssh://hg@bitbucket.org/%s/%s %s' % (username, slug, backup_dir)
+            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (username, slug)
     if scm == 'git':
         git_command = 'git clone'
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git %s" % (git_command, username, password, username, slug, backup_dir)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, username, slug)
         else:
-            command = "%s git@bitbucket.org:%s/%s.git %s" % (git_command, username, slug, backup_dir)
+            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
-    exec_cmd(command)
+    exec_cmd("%s %s" % (command, backup_dir))
+    if with_wiki and repo.get('has_wiki'):
+        debug("Cloning %s's Wiki..." % repo.get('name'))
+        exec_cmd("%s/wiki %s_wiki" % (command, backup_dir))
 
 
-def update_repo(repo, backup_dir):
+def update_repo(repo, backup_dir, with_wiki=False):
     scm = repo.get('scm')
     command = None
     os.chdir(backup_dir)
@@ -102,6 +105,11 @@ def update_repo(repo, backup_dir):
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
     exec_cmd(command)
+    wiki_dir = "%s_wiki" % backup_dir
+    if with_wiki and repo.get('has_wiki') and os.path.exists(wiki_dir):
+        os.chdir(wiki_dir)
+        debug("Updating %s's Wiki..." % repo.get('name'))
+        exec_cmd(command)
 
 
 if __name__ == "__main__":
@@ -115,6 +123,7 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quiet", action='store_true', dest="quiet", help="No output to stdout")
     parser.add_argument("-c", "--compress", action='store_true', dest="compress", help="Creates a compressed file with all cloned repositories (cleans up location directory)")
     parser.add_argument('--mirror', action='store_true', help="Clone just bare repositories with git clone --mirror (git only)")
+    parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
     args = parser.parse_args()
@@ -124,8 +133,8 @@ if __name__ == "__main__":
     location = args.location
     _quiet = args.quiet
     _verbose = args.verbose
-    _verbose = args.verbose
     _mirror = args.mirror
+    _with_wiki = args.with_wiki
     if _quiet:
         _verbose = False  # override in case both are selected
     http = args.http
@@ -146,10 +155,10 @@ if __name__ == "__main__":
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
             if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, password, mirror=_mirror)
+                clone_repo(repo, backup_dir, http, password, mirror=_mirror, with_wiki=_with_wiki)
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
-                update_repo(repo, backup_dir)
+                update_repo(repo, backup_dir, with_wiki=_with_wiki)
         if args.compress:
             compress(repo, location)
         debug("Finished!", True)
