@@ -106,7 +106,7 @@ def update_repo(repo, backup_dir, with_wiki=False):
     debug("Updating %s..." % repo.get('name'))
     exec_cmd(command)
     wiki_dir = "%s_wiki" % backup_dir
-    if with_wiki and repo.get('has_wiki') and os.path.exists(wiki_dir):
+    if with_wiki and repo.get('has_wiki') and os.path.isdir(wiki_dir):
         os.chdir(wiki_dir)
         debug("Updating %s's Wiki..." % repo.get('name'))
         exec_cmd(command)
