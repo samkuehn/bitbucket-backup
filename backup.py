@@ -81,7 +81,7 @@ def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
         if http:
             command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, username, slug)
         else:
-            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
+            command = "%s ssh://git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
