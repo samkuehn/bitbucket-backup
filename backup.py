@@ -160,6 +160,9 @@ if __name__ == "__main__":
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("owner"), repo.get("slug"))
             if not os.path.isdir(backup_dir):
+                owner_dir = os.path.join(location, repo.get("owner"))
+                if not os.path.isdir(owner_dir):
+                    os.makedirs(owner_dir)
                 clone_repo(repo, backup_dir, http, password, mirror=_mirror, with_wiki=_with_wiki)
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
