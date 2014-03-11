@@ -88,9 +88,9 @@ class BitBucket(object):
         if self.verbose:
             print("Sending request to: [{0}]".format(url))
         request = self.build_request(url, method=method, data=data)
-        result = urlopen(request).read().decode("utf_8")
+        result = urlopen(request).read()
         if self.verbose:
-            print(u"Response data: [{0}]".format(result))
+            print("Response data: [{0}]".format(result))
         return result
 
     def user(self, username):
