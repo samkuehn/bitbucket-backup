@@ -141,7 +141,7 @@ class User(object):
 
     def get(self):
         url = api_base + 'users/%s/' % self.username
-        return json.loads(self.bb.load_url(url))
+        return json.loads(self.bb.load_url(url).decode('utf-8'))
 
     def __repr__(self):
         return '<User: %s>' % self.username
@@ -156,7 +156,7 @@ class Repository(object):
         self.base_url = api_base + 'repositories/%s/%s/' % (self.username, self.slug)
 
     def get(self):
-        return json.loads(self.bb.load_url(self.base_url))
+        return json.loads(self.bb.load_url(self.base_url).decode('utf-8'))
 
     def changeset(self, revision):
         """Get one changeset from a repos."""
@@ -218,7 +218,7 @@ class Issue(object):
         self.base_url = api_base + 'repositories/%s/%s/issues/%s/' % (username, slug, number)
 
     def get(self):
-        return json.loads(self.bb.load_url(self.base_url))
+        return json.loads(self.bb.load_url(self.base_url).decode('utf-8'))
 
     def followers(self):
         url = self.base_url + 'followers/'
