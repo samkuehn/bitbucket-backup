@@ -85,7 +85,7 @@ def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
-    exec_cmd("%s %s" % (command, backup_dir))
+    exec_cmd('%s "%s"' % (command, backup_dir))
     if with_wiki and repo.get('has_wiki'):
         debug("Cloning %s's Wiki..." % repo.get('name'))
         exec_cmd("%s/wiki %s_wiki" % (command, backup_dir))
