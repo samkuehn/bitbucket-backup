@@ -9,7 +9,7 @@ an `git remote update` will be run for git repos.
 ## Quickstart
 ```
 python backup.py -u <bitbucket_username> -l <local_backup_location>
-  [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
+  [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror] [--all]
 ```
 The password is needed to access the bitbucket api's.  At this time it is not used to do the clone/update.
 Clone/update requires that your ssh keys have been uploaded to bitbucket.

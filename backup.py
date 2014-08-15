@@ -63,25 +63,25 @@ def compress(repo, location):
             exec_cmd("rm -rfv %s" % path)
 
 
-def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
+def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wiki=False):
     global _quiet, _verbose
     scm = repo.get('scm')
     slug = repo.get('slug')
-    username = repo.get('owner')
+    owner = repo.get('owner')
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, username, slug)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, owner, slug)
         else:
-            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (username, slug)
+            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (owner, slug)
     if scm == 'git':
         git_command = 'git clone'
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, username, slug)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, owner, slug)
         else:
-            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
+            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, owner, slug)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
@@ -126,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
+    parser.add_argument('--all', action='store_true', help="Backup all repositories, not just the ones owned by the user")
     args = parser.parse_args()
     username = args.username
     password = args.password
@@ -143,19 +144,23 @@ if __name__ == "__main__":
             password = getpass(prompt='Enter your bitbucket password: ')
     if not username or not location:
         parser.error('Please supply a username and backup location (-u <username> -l <backup location>)')
+    all = args.all
 
     # ok to proceed
     try:
         bb = bitbucket.BitBucket(username, password, _verbose)
         user = bb.user(owner)
-        repos = user.repositories()
+        if all:
+            repos = user.all_repositories()
+        else:
+            repos = user.repositories()
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
             debug("Backing up [%s]..." % repo.get("name"), True)
-            backup_dir = os.path.join(location, repo.get("slug"))
+            backup_dir = os.path.join(location, repo.get("owner"), repo.get("slug"))
             if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, password, mirror=_mirror, with_wiki=_with_wiki)
+                clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
                 update_repo(repo, backup_dir, with_wiki=_with_wiki)
