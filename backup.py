@@ -148,7 +148,7 @@ if __name__ == "__main__":
     try:
         bb = bitbucket.BitBucket(username, password, _verbose)
         user = bb.user(owner)
-        repos = user.repositories()
+        repos = sorted(user.repositories(), key=lambda repo: repo.get("name"))
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
