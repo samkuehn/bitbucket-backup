@@ -21,7 +21,6 @@ You can backup a team's repositories instead of your own by supplying the option
 * Python < 2.7 must manually install argparse ```pip install aprgparse``` or ```easy_install install argparse```
 
 You do need to have your ssh keys uploaded for the computer that you are running the backup on.
-This could be changed in the future but it would require storing your password in the backed up repos which is no good (in my opinion).
 
-##Additional notes
+## Additional notes
 I am hosting this on GitHub because I believe it is superior for public repos (I understand the irony).
