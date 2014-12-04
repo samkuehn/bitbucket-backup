@@ -63,25 +63,25 @@ def compress(repo, location):
             exec_cmd("rm -rfv %s" % path)
 
 
-def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
+def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wiki=False):
     global _quiet, _verbose
     scm = repo.get('scm')
     slug = repo.get('slug')
-    username = repo.get('owner')
+    owner = repo.get('owner')
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, username, slug)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, owner, slug)
         else:
-            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (username, slug)
+            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (owner, slug)
     if scm == 'git':
         git_command = 'git clone'
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, username, slug)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, owner, slug)
         else:
-            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
+            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, owner, slug)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
@@ -160,7 +160,7 @@ if __name__ == "__main__":
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("owner"), repo.get("slug"))
             if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, password, mirror=_mirror, with_wiki=_with_wiki)
+                clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
                 update_repo(repo, backup_dir, with_wiki=_with_wiki)
