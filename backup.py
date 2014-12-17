@@ -70,20 +70,23 @@ def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
     scm = repo.get('scm')
     slug = repo.get('slug')
     username = repo.get('owner')
+    username_url = urllib.urlencode(username)
+    password_url = urllib.urlencode(password)
+    slug_url = urllib.urlencode(slug)
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username, password, username, slug)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username_url, password_url, username_url, slug_url)
         else:
-            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (username, slug)
+            command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (username_url, slug_url)
     if scm == 'git':
         git_command = 'git clone'
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username, password, username, slug)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username_url, password_url, username_url, slug)
         else:
-            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username, slug)
+            command = "%s git@bitbucket.org:%s/%s.git" % (git_command, username_url, slug_url)
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
