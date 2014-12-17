@@ -15,10 +15,10 @@ try:
     from urllib.parse import urlencode
 except ImportError:
     from urllib import urlencode
-from functools import wraps
+import base64
 import datetime
 import time
-import base64
+from functools import wraps
 
 try:
     import json

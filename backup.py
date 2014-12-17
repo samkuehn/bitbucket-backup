@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+import argparse
+import datetime
+import os
+import sys
+import urllib
+from getpass import getpass
 
 import bitbucket
-import os
-import argparse
-from getpass import getpass
-import sys
-import datetime
+
 try:
     from urllib.error import HTTPError, URLError
 except ImportError:
