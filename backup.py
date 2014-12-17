@@ -70,9 +70,9 @@ def clone_repo(repo, backup_dir, http, password, mirror=False, with_wiki=False):
     scm = repo.get('scm')
     slug = repo.get('slug')
     username = repo.get('owner')
-    username_url = urllib.urlencode(username)
-    password_url = urllib.urlencode(password)
-    slug_url = urllib.urlencode(slug)
+    username_url = urllib.quote(username)
+    password_url = urllib.quote(password)
+    slug_url = urllib.quote(slug)
     command = None
     if scm == 'hg':
         if http:
