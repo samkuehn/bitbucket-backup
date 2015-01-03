@@ -135,7 +135,7 @@ if __name__ == "__main__":
     username = args.username
     password = args.password
     owner = args.team if args.team else username
-    location = args.location
+    location = os.path.abspath(args.location)
     _quiet = args.quiet
     _verbose = args.verbose
     _mirror = args.mirror
