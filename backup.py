@@ -158,7 +158,7 @@ if __name__ == "__main__":
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
-            if repo.get("slug") in args.ignore_repo_list:
+            if args.ignore_repo_list and repo.get("slug") in args.ignore_repo_list:
                 debug("ignoring repo %s with slug: %s" % (repo.get("name"), repo.get("slug")))
                 continue
 
