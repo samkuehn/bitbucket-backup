@@ -126,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
+    parser.add_argument('--ignore-repo-list', dest='ignore_repo_list', nargs='+', type=str, help="specify list of repo slug names to skip")
     args = parser.parse_args()
     username = args.username
     password = args.password
@@ -152,6 +153,10 @@ if __name__ == "__main__":
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
+            if repo.get("slug") in args.ignore_repo_list:
+                debug("ignoring repo %s with slug: %s" % (repo.get("name"), repo.get("slug")))
+                continue
+
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
             if not os.path.isdir(backup_dir):
