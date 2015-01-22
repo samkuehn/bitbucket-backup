@@ -45,7 +45,10 @@ def exec_cmd(command):
     global _verbose
     debug("Executing command: %s" % command)
     if not _verbose:
-        command = "%s > /dev/null 2>&1" % command
+        if 'nt' == os.name:
+            command = "%s > nul 2> nul" % command
+        else:
+            command = "%s > /dev/null 2>&1" % command
     resp = os.system(command)
     if resp != 0:
         exit("Command [%s] failed" % command, resp)
