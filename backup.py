@@ -73,7 +73,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
     scm = repo.get('scm')
     slug = repo.get('slug')
     owner = repo.get('owner')
-    
+
     owner_url = urllib.quote(owner)
     username_url = urllib.quote(username)
     password_url = urllib.quote(password)
@@ -122,8 +122,7 @@ def update_repo(repo, backup_dir, with_wiki=False):
         exec_cmd(command)
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")
     parser.add_argument("-u", "--username", dest="username", help="Bitbucket username")
     parser.add_argument("-p", "--password", dest="password", help="Bitbucket password")
@@ -138,22 +137,25 @@ if __name__ == "__main__":
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
     parser.add_argument('--ignore-repo-list', dest='ignore_repo_list', nargs='+', type=str, help="specify list of repo slug names to skip")
     args = parser.parse_args()
+    location = args.location
     username = args.username
     password = args.password
-    owner = args.team if args.team else username
-    location = os.path.abspath(args.location)
+    http = args.http
     _quiet = args.quiet
     _verbose = args.verbose
     _mirror = args.mirror
     _with_wiki = args.with_wiki
     if _quiet:
         _verbose = False  # override in case both are selected
-    http = args.http
+    if not username:
+        username = raw_input('Enter bitbucket username or team name: ')
+    owner = args.team if args.team else username
     if not password:
         if not args.skip_password:
             password = getpass(prompt='Enter your bitbucket password: ')
-    if not username or not location:
-        parser.error('Please supply a username and backup location (-u <username> -l <backup location>)')
+    if not location:
+        location = raw_input('Enter local location to backup to: ')
+    location = os.path.abspath(location)
 
     # ok to proceed
     try:
@@ -191,3 +193,7 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
         exit("Unknown error.", 11)  # EAGAIN - Try again
+
+
+if __name__ == '__main__':
+    main()
