@@ -6,9 +6,15 @@ If the repository does not exist locally the repo will be cloned to the <local_b
 If the repo does exist locally an `hg pull` will be run for mercurial repos,
 an `git remote update` will be run for git repos.
 
-## Quickstart
+## Installation
+
+```bash
+pip install https://github.com/NOVO-Construction/cosential-compass/archive/master.zip
 ```
-python backup.py -u <bitbucket_username> -l <local_backup_location>
+
+## Quickstart
+```bash
+bitbuckt-backup [-u <bitbucket_username>] [-l <local_backup_location>]
   [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
 ```
 The password is needed to access the bitbucket api's.  At this time it is not used to do the clone/update.
