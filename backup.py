@@ -148,7 +148,7 @@ def main():
     if _quiet:
         _verbose = False  # override in case both are selected
     if not username:
-        username = raw_input('Enter bitbucket username or team name: ')
+        username = raw_input('Enter bitbucket username: ')
     owner = args.team if args.team else username
     if not password:
         if not args.skip_password:
