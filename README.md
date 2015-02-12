@@ -1,5 +1,7 @@
 #Bitbucket backup
 
+[![Build Status](https://travis-ci.org/samkuehn/bitbucket-backup.svg?branch=master)](https://travis-ci.org/samkuehn/bitbucket-backup)
+
 ## Description
 This python script will backup all of your bitbucket repos (both mercurial and git) locally.
 If the repository does not exist locally the repo will be cloned to the <local_backup_location>.
