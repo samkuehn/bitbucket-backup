@@ -2,8 +2,6 @@
 from setuptools import find_packages, setup
 
 TEST_REQUIRES = [
-    'coverage',
-    'flexmock',
     'nose',
     'unittest2',
 ]

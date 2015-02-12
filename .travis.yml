@@ -9,4 +9,4 @@ install:
 
 # command to run tests
 script:
-  - coverage run --source=. setup.py test
+  - nosetests
