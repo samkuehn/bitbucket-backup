@@ -9,7 +9,7 @@ an `git remote update` will be run for git repos.
 ## Installation
 
 ```bash
-pip install https://github.com/NOVO-Construction/cosential-compass/archive/master.zip
+pip install https://github.com/samkuehn/bitbucket-backup/archive/master.zip
 ```
 
 ## Quickstart
@@ -23,8 +23,6 @@ Clone/update requires that your ssh keys have been uploaded to bitbucket.
 You can backup a team's repositories instead of your own by supplying the optional `-t` parameter.
 
 ## Requirements
-* Python (there are no external dependencies that are not included)
-* Python < 2.7 must manually install argparse ```pip install aprgparse``` or ```easy_install install argparse```
 
 You do need to have your ssh keys uploaded for the computer that you are running the backup on.
 
