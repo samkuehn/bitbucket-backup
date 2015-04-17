@@ -16,7 +16,7 @@ pip install https://github.com/samkuehn/bitbucket-backup/archive/master.zip
 
 ## Quickstart
 ```bash
-bitbuckt-backup [-u <bitbucket_username>] [-l <local_backup_location>]
+bitbucket-backup [-u <bitbucket_username>] [-l <local_backup_location>]
   [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
 ```
 The password is needed to access the bitbucket api's.  At this time it is not used to do the clone/update.
