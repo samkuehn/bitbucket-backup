@@ -24,7 +24,7 @@ def debug(message, output_no_verbose=False):
     """
     global _quiet, _verbose
     if not _quiet and (output_no_verbose or _verbose):
-        print("{0} - {1}".format(datetime.datetime.now(), message))
+        print("%s - %s" % (datetime.datetime.now(), message))
 
 
 def exit(message, code=1):
