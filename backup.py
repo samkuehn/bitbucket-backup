@@ -3,7 +3,6 @@ import argparse
 import datetime
 import os
 import sys
-import urllib
 from getpass import getpass
 
 import bitbucket
@@ -13,6 +12,15 @@ try:
 except ImportError:
     from urllib2 import HTTPError, URLError
 
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
+
+try:
+    input = raw_input
+except NameError:
+    pass
 
 _verbose = False
 _quiet = False
@@ -59,7 +67,7 @@ def compress(repo, location):
     Creates a TAR.GZ file with all contents cloned by this script.
     """
     os.chdir(location)
-    debug("Compressing repositories in [%s]..." % (location), True)
+    debug("Compressing repositories in [%s]..." % location, True)
     exec_cmd("tar -zcvf bitbucket-backup-%s-%s.tar.gz `ls -d *`" % (repo.get('owner'), datetime.datetime.now().strftime('%Y%m%d%H%m%s')))
     debug("Cleaning up...", True)
     for d in os.listdir(location):
@@ -74,10 +82,10 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
     slug = repo.get('slug')
     owner = repo.get('owner')
 
-    owner_url = urllib.quote(owner)
-    username_url = urllib.quote(username)
-    password_url = urllib.quote(password)
-    slug_url = urllib.quote(slug)
+    owner_url = quote(owner)
+    username_url = quote(username)
+    password_url = quote(password)
+    slug_url = quote(slug)
     command = None
     if scm == 'hg':
         if http:
@@ -148,13 +156,13 @@ def main():
     if _quiet:
         _verbose = False  # override in case both are selected
     if not username:
-        username = raw_input('Enter bitbucket username: ')
+        username = input('Enter bitbucket username: ')
     owner = args.team if args.team else username
     if not password:
         if not args.skip_password:
             password = getpass(prompt='Enter your bitbucket password: ')
     if not location:
-        location = raw_input('Enter local location to backup to: ')
+        location = input('Enter local location to backup to: ')
     location = os.path.abspath(location)
 
     # ok to proceed
@@ -191,6 +199,7 @@ def main():
     except:
         if not _quiet:
             import traceback
+
             traceback.print_exc()
         exit("Unknown error.", 11)  # EAGAIN - Try again
 
