@@ -97,7 +97,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username_url, password_url, owner_url, slug)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username_url, password_url, owner_url, slug_url)
         else:
             command = "%s git@bitbucket.org:%s/%s.git" % (git_command, owner_url, slug_url)
     if not command:
@@ -117,8 +117,6 @@ def update_repo(repo, backup_dir, with_wiki=False):
         command = 'hg pull -u'
     if scm == 'git':
         command = 'git remote update'
-    if not command:
-        return
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
