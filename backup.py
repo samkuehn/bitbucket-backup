@@ -176,7 +176,7 @@ def main():
                 continue
 
             debug("Backing up [%s]..." % repo.get("name"), True)
-            backup_dir = os.path.join(location.encode("utf-8"), repo.get("slug").encode("utf-8"))
+            backup_dir = os.path.join(location, repo.get("slug"))
             if not os.path.isdir(backup_dir):
                 clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
             else:
