@@ -26,13 +26,15 @@ _verbose = False
 _quiet = False
 
 
-def debug(message, output_no_verbose=False):
+def debug(message, output_no_verbose=False, flush=False):
     """
     Outputs a message to stdout taking into account the options verbose/quiet.
     """
     global _quiet, _verbose
     if not _quiet and (output_no_verbose or _verbose):
         print("%s - %s" % (datetime.datetime.now(), message))
+    if flush:
+        sys.stdout.flush()
 
 
 def exit(message, code=1):
@@ -51,7 +53,7 @@ def exec_cmd(command):
     Executes an external command taking into account errors and logging.
     """
     global _verbose
-    debug("Executing command: %s" % command)
+    debug("Executing command: %s" % command, flush=True)
     if not _verbose:
         if 'nt' == os.name:
             command = "%s > nul 2> nul" % command
