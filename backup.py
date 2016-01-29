@@ -147,7 +147,9 @@ def main():
     username = args.username
     password = args.password
     http = args.http
+    global _quiet
     _quiet = args.quiet
+    global _verbose
     _verbose = args.verbose
     _mirror = args.mirror
     _with_wiki = args.with_wiki
