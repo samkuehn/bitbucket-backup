@@ -116,7 +116,7 @@ def update_repo(repo, backup_dir, with_wiki=False):
     if scm == 'hg':
         command = 'hg pull -u'
     if scm == 'git':
-        command = 'git remote update'
+        command = 'git remote update & git pull --all'
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
