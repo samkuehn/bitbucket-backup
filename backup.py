@@ -163,6 +163,9 @@ def main():
         location = input('Enter local location to backup to: ')
     location = os.path.abspath(location)
 
+    success_count = 0
+    fail_count = 0
+
     # ok to proceed
     try:
         bb = bitbucket.BitBucket(username, password, _verbose)
@@ -178,13 +181,25 @@ def main():
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location.encode("utf-8"), repo.get("slug").encode("utf-8"))
             if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
+                try:
+                    clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
+                    success_count = success_count + 1
+                except (KeyboardInterrupt, SystemExit):
+                    debug("Operation cancelled. There might be inconsistent data in location directory. Skipping this repository.")
+                    fail_count = fail_count + 1
+                    pass
             else:
                 debug("Repository [%s] already in place, just updating..." % repo.get("name"))
-                update_repo(repo, backup_dir, with_wiki=_with_wiki)
+                try:
+                    update_repo(repo, backup_dir, with_wiki=_with_wiki)
+                    success_count = success_count + 1
+                except (KeyboardInterrupt, SystemExit):
+                    debug("Operation cancelled. There might be inconsistent data in location directory. Skipping this repository.")
+                    fail_count = fail_count + 1
+                    pass
         if args.compress:
             compress(repo, location)
-        debug("Finished!", True)
+        debug("Backup finished! Succeeded: %s Failed: %s" % (success_count, fail_count), True)
     except HTTPError as err:
         if err.code == 401:
             exit("Unauthorized! Check your credentials and try again.", 22)  # EINVAL - Invalid argument
