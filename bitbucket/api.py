@@ -70,20 +70,19 @@ class BitBucket(object):
     """Main bitbucket class.  Use an instantiated version of this class
     to make calls against the REST API."""
 
-    def __init__(self, username='', password='', oauth_key=None, oauth_secret=None, verbose=False):
+    def __init__(self, username='', password='', oauth_key='', oauth_secret='', verbose=False):
         self.username = username
         self.password = password
-        self.oauth_key = oauth_key
-        self.oauth_secret = oauth_secret
+        self.oauth_key = oauth_key.strip()
+        self.oauth_secret = oauth_secret.strip()
         self.verbose = verbose
 
     def build_request(self, url, method="GET", data=None):
         if all((self.oauth_key, self.oauth_secret)):
             import oauthlib.oauth1
-            client = oauthlib.oauth1.Client('self.oauth_key', client_secret=self.oauth_secret)
+            client = oauthlib.oauth1.Client(self.oauth_key, client_secret=self.oauth_secret)
             uri, headers, body = client.sign(url)
             request = Request(url, data, headers)
-            request.get_method = lambda: method
             return request
         if all((self.username, self.password)):
             auth = '%s:%s' % (self.username, self.password)

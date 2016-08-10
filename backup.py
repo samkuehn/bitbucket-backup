@@ -87,13 +87,13 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
     owner = repo.get('owner')
 
     owner_url = quote(owner)
-    username_url = quote(username)
-    password_url = quote(password)
+    if http and not all((username, password)):
+        exit("Cannot backup via http without username and password" % scm)
     slug_url = quote(slug)
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username_url, password_url, owner_url, slug_url)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (quote(username), quote(password), owner_url, slug_url)
         else:
             command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (owner_url, slug_url)
     if scm == 'git':
@@ -101,7 +101,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username_url, password_url, owner_url, slug_url)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, quote(username), quote(password), owner_url, slug_url)
         else:
             command = "%s git@bitbucket.org:%s/%s.git" % (git_command, owner_url, slug_url)
     if not command:
