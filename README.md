@@ -26,7 +26,7 @@ Clone/update requires that your ssh keys have been uploaded to bitbucket.
 You can backup a team's repositories instead of your own by supplying the optional `-t` parameter.
 
 ## OAuth authentication
-You can use OAuth authentication if you do not want to use username/password. There are 3 steps to using OAuth.
+You can use OAuth authentication if you do not want to use username/password. There are 4 steps to using OAuth.
 
 1. Create OAuth consumer keys here: `https://bitbucket.org/account/user/<username>/api`
 2. Make sure that your consumer has the following permissions:
@@ -34,6 +34,7 @@ You can use OAuth authentication if you do not want to use username/password. Th
     - Projects: Read
     - Repositories: Read
 3. Specify the `-k <oauth_key> -s <oauth_secret>` flags
+4. Make sure oauthlib is installed `pip install oauthlib`
 
 ## Requirements
 
