@@ -70,19 +70,30 @@ class BitBucket(object):
     """Main bitbucket class.  Use an instantiated version of this class
     to make calls against the REST API."""
 
-    def __init__(self, username='', password='', verbose=False):
+    def __init__(self, username='', password='', oauth_key=None, oauth_secret=None, verbose=False):
         self.username = username
         self.password = password
+        self.oauth_key = oauth_key
+        self.oauth_secret = oauth_secret
         self.verbose = verbose
 
     def build_request(self, url, method="GET", data=None):
-        if not all((self.username, self.password)):
-            return Request(url)
-        auth = '%s:%s' % (self.username, self.password)
-        auth = {'Authorization': 'Basic %s' % (base64.b64encode(auth.encode("utf_8")).decode("utf_8").strip())}
-        request = Request(url, data, auth)
-        request.get_method = lambda: method
-        return request
+        if all((self.oauth_key, self.oauth_secret)):
+            import oauthlib.oauth1
+            client = oauthlib.oauth1.Client('self.oauth_key', client_secret=self.oauth_secret)
+            uri, headers, body = client.sign(url)
+            print uri
+            print headers
+            request = Request(url, data, headers)
+            request.get_method = lambda: method
+            return request
+        if all((self.username, self.password)):
+            auth = '%s:%s' % (self.username, self.password)
+            auth = {'Authorization': 'Basic %s' % (base64.b64encode(auth.encode("utf_8")).decode("utf_8").strip())}
+            request = Request(url, data, auth)
+            request.get_method = lambda: method
+            return request
+        return Request(url)
 
     def load_url(self, url, method="GET", data=None):
         if self.verbose:
