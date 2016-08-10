@@ -26,6 +26,10 @@ _verbose = False
 _quiet = False
 
 
+class MaxBackupAttemptsReached(Exception):
+    pass
+
+
 def debug(message, output_no_verbose=False):
     """
     Outputs a message to stdout taking into account the options verbose/quiet.
@@ -83,13 +87,13 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
     owner = repo.get('owner')
 
     owner_url = quote(owner)
-    username_url = quote(username)
-    password_url = quote(password)
+    if http and not all((username, password)):
+        exit("Cannot backup via http without username and password" % scm)
     slug_url = quote(slug)
     command = None
     if scm == 'hg':
         if http:
-            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (username_url, password_url, owner_url, slug_url)
+            command = 'hg clone https://%s:%s@bitbucket.org/%s/%s' % (quote(username), quote(password), owner_url, slug_url)
         else:
             command = 'hg clone ssh://hg@bitbucket.org/%s/%s' % (owner_url, slug_url)
     if scm == 'git':
@@ -97,7 +101,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         if mirror:
             git_command = 'git clone --mirror'
         if http:
-            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, username_url, password_url, owner_url, slug_url)
+            command = "%s https://%s:%s@bitbucket.org/%s/%s.git" % (git_command, quote(username), quote(password), owner_url, slug_url)
         else:
             command = "%s git@bitbucket.org:%s/%s.git" % (git_command, owner_url, slug_url)
     if not command:
@@ -132,11 +136,14 @@ def main():
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")
     parser.add_argument("-u", "--username", dest="username", help="Bitbucket username")
     parser.add_argument("-p", "--password", dest="password", help="Bitbucket password")
+    parser.add_argument("-k", "--oauth-key", dest="oauth_key", help="Bitbucket oauth key")
+    parser.add_argument("-s", "--oauth-secret", dest="oauth_secret", help="Bitbucket oauth secret")
     parser.add_argument("-t", "--team", dest="team", help="Bitbucket team")
     parser.add_argument("-l", "--location", dest="location", help="Local backup location")
     parser.add_argument("-v", "--verbose", action='store_true', dest="verbose", help="Verbose output of all cloning commands")
     parser.add_argument("-q", "--quiet", action='store_true', dest="quiet", help="No output to stdout")
     parser.add_argument("-c", "--compress", action='store_true', dest="compress", help="Creates a compressed file with all cloned repositories (cleans up location directory)")
+    parser.add_argument("-a", "--attempts", dest="attempts", type=int, default=1, help="max. number of attempts to backup repository")
     parser.add_argument('--mirror', action='store_true', help="Clone just bare repositories with git clone --mirror (git only)")
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
@@ -146,7 +153,10 @@ def main():
     location = args.location
     username = args.username
     password = args.password
+    oauth_key = args.oauth_key
+    oauth_secret = args.oauth_secret
     http = args.http
+    max_attempts = args.attempts
     global _quiet
     _quiet = args.quiet
     global _verbose
@@ -155,19 +165,29 @@ def main():
     _with_wiki = args.with_wiki
     if _quiet:
         _verbose = False  # override in case both are selected
-    if not username:
-        username = input('Enter bitbucket username: ')
-    owner = args.team if args.team else username
-    if not password:
-        if not args.skip_password:
-            password = getpass(prompt='Enter your bitbucket password: ')
+
+    if all((oauth_key, oauth_secret)):
+        owner = args.team if args.team else username
+    else:
+        if not username:
+            username = input('Enter bitbucket username: ')
+        owner = args.team if args.team else username
+        if not password:
+            if not args.skip_password:
+                password = getpass(prompt='Enter your bitbucket password: ')
     if not location:
         location = input('Enter local location to backup to: ')
     location = os.path.abspath(location)
 
     # ok to proceed
     try:
-        bb = bitbucket.BitBucket(username, password, _verbose)
+        bb = bitbucket.BitBucket(
+            username=username,
+            password=password,
+            oauth_key=oauth_key,
+            oauth_secret=oauth_secret,
+            verbose=_verbose,
+        )
         user = bb.user(owner)
         repos = sorted(user.repositories(), key=lambda repo: repo.get("name"))
         if not repos:
@@ -179,11 +199,21 @@ def main():
 
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
-            if not os.path.isdir(backup_dir):
-                clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
-            else:
-                debug("Repository [%s] already in place, just updating..." % repo.get("name"))
-                update_repo(repo, backup_dir, with_wiki=_with_wiki)
+
+            for attempt in xrange(1, max_attempts + 1):
+                try:
+                    if not os.path.isdir(backup_dir):
+                        clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
+                    else:
+                        debug("Repository [%s] already in place, just updating..." % repo.get("name"))
+                        update_repo(repo, backup_dir, with_wiki=_with_wiki)
+                except:
+                    if attempt == max_attempts:
+                        raise MaxBackupAttemptsReached("repo [%s] is reached maximum number [%d] of backup tries" % (repo.get("name"), attempt))
+                    debug("Failed to backup repository [%s], keep trying, %d attempts remain" % (repo.get("name"), max_attempts - attempt))
+                else:
+                    break
+
         if args.compress:
             compress(repo, location)
         debug("Finished!", True)
@@ -196,6 +226,8 @@ def main():
         exit("Unable to reach Bitbucket: %s." % e.reason, 101)  # ENETUNREACH - Network is unreachable
     except (KeyboardInterrupt, SystemExit):
         exit("Operation cancelled. There might be inconsistent data in location directory.", 0)
+    except MaxBackupAttemptsReached as e:
+        exit("Unable to backup: %s" % e)
     except:
         if not _quiet:
             import traceback
