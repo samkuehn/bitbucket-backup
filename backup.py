@@ -168,8 +168,6 @@ def main():
 
     if all((oauth_key, oauth_secret)):
         owner = args.team if args.team else username
-        if not owner:
-            owner = input('Enter repo to backup: ')
     else:
         if not username:
             username = input('Enter bitbucket username: ')

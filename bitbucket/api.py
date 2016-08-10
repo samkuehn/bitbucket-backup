@@ -79,7 +79,12 @@ class BitBucket(object):
 
     def build_request(self, url, method="GET", data=None):
         if all((self.oauth_key, self.oauth_secret)):
-            import oauthlib.oauth1
+            try:
+                import oauthlib.oauth1
+            except ImportError:
+                import sys
+                print("You must install oauthlib if you want to use oauth `pip install oauthlib`")
+                sys.exit(0)
             client = oauthlib.oauth1.Client(self.oauth_key, client_secret=self.oauth_secret)
             uri, headers, body = client.sign(url)
             request = Request(url, data, headers)
@@ -103,9 +108,6 @@ class BitBucket(object):
 
     def user(self, username):
         return User(self, username)
-
-    def repository(self, username, slug):
-        return Repository(self, username, slug)
 
     @requires_authentication
     def emails(self):
@@ -133,104 +135,17 @@ class User(object):
         self.bb = bb
         self.username = username
 
-    def repository(self, slug):
-        return Repository(self.bb, self.username, slug)
-
     def repositories(self):
         user_data = self.get()
         return user_data['repositories']
 
-    def events(self, start=None, limit=None):
-        query = smart_encode(start=start, limit=limit)
-        url = api_base + 'users/%s/events/' % self.username
-        if query:
-            url += '?%s' % query
-        return json.loads(self.bb.load_url(url))
-
     def get(self):
-        url = api_base + 'users/%s/' % self.username
+        if self.username is None:
+            url = api_base + 'user/'
+        else:
+            url = api_base + 'users/%s/' % self.username
         return json.loads(self.bb.load_url(url).decode('utf-8'))
 
     def __repr__(self):
         return '<User: %s>' % self.username
 
-
-class Repository(object):
-
-    def __init__(self, bb, username, slug):
-        self.bb = bb
-        self.username = username
-        self.slug = slug
-        self.base_url = api_base + 'repositories/%s/%s/' % (self.username, self.slug)
-
-    def get(self):
-        return json.loads(self.bb.load_url(self.base_url).decode('utf-8'))
-
-    def changeset(self, revision):
-        """Get one changeset from a repos."""
-        url = self.base_url + 'changesets/%s/' % (revision)
-        return json.loads(self.bb.load_url(url))
-
-    def changesets(self, limit=None):
-        """Get information about changesets on a repository."""
-        url = self.base_url + 'changesets/'
-        query = smart_encode(limit=limit)
-        if query:
-            url += '?%s' % query
-        return json.loads(self.bb.load_url(url))
-
-    def tags(self):
-        """Get a list of tags for a repository."""
-        url = self.base_url + 'tags/'
-        return json.loads(self.bb.load_url(url))
-
-    def branches(self):
-        """Get a list of branches for a repository."""
-        url = self.base_url + 'branches/'
-        return json.loads(self.bb.load_url(url))
-
-    def issue(self, number):
-        return Issue(self.bb, self.username, self.slug, number)
-
-    def issues(self, start=None, limit=None):
-        url = self.base_url + 'issues/'
-        query = smart_encode(start=start, limit=limit)
-        if query:
-            url += '?%s' % query
-        return json.loads(self.bb.load_url(url))
-
-    def events(self):
-        url = self.base_url + 'events/'
-        return json.loads(self.bb.load_url(url))
-
-    def followers(self):
-        url = self.base_url + 'followers/'
-        return json.loads(self.bb.load_url(url))
-
-    @requires_authentication
-    def save(self, repo_data):
-        url = self.base_url
-        return json.loads(self.bb.load_url(url, method="PUT", data=urlencode(repo_data)))
-
-    def __repr__(self):
-        return '<Repository: %s\'s %s>' % (self.username, self.slug)
-
-
-class Issue(object):
-
-    def __init__(self, bb, username, slug, number):
-        self.bb = bb
-        self.username = username
-        self.slug = slug
-        self.number = number
-        self.base_url = api_base + 'repositories/%s/%s/issues/%s/' % (username, slug, number)
-
-    def get(self):
-        return json.loads(self.bb.load_url(self.base_url).decode('utf-8'))
-
-    def followers(self):
-        url = self.base_url + 'followers/'
-        return json.loads(self.bb.load_url(url))
-
-    def __repr__(self):
-        return '<Issue #%s on %s\'s %s>' % (self.number, self.username, self.slug)

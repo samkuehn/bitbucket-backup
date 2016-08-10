@@ -16,17 +16,27 @@ pip install https://github.com/samkuehn/bitbucket-backup/archive/master.zip
 
 ## Quickstart
 ```bash
-bitbucket-backup [-u <bitbucket_username>] [-l <local_backup_location>]
-  [-p <bitbucket_password>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
+bitbucket-backup [-u <bitbucket_username>] [-p <bitbucket_password>] [-k <oauth_key>] [-s <oauth_secret>]
+  [-l <local_backup_location>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
 ```
 The password is needed to access the bitbucket api's.  At this time it is not used to do the clone/update.
 Clone/update requires that your ssh keys have been uploaded to bitbucket.
 
 You can backup a team's repositories instead of your own by supplying the optional `-t` parameter.
 
+## OAuth authentication
+You can use OAuth authentication if you do not want to use username/password. There are 3 steps to using OAuth.
+1. Create OAuth consumer keys here: `https://bitbucket.org/account/user/<username>/api`
+2. Make sure that your consumer has the following permissions:
+    - Account: Read
+    - Projects: Read
+    - Repositories: Read
+3. Specify the `-k <oauth_key> -s <oauth_secret>` flags
+
 ## Requirements
 
 You do need to have your ssh keys uploaded for the computer that you are running the backup on.
+If you would like to use OAuth authentication you need to install oauthlib `pip install oauthlib`.
 
 ## Additional notes
 I am hosting this on GitHub because I believe it is superior for public repos (I understand the irony).
