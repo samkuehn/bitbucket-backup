@@ -73,8 +73,8 @@ class BitBucket(object):
     def __init__(self, username='', password='', oauth_key='', oauth_secret='', verbose=False):
         self.username = username
         self.password = password
-        self.oauth_key = oauth_key.strip()
-        self.oauth_secret = oauth_secret.strip()
+        self.oauth_key = oauth_key
+        self.oauth_secret = oauth_secret
         self.verbose = verbose
 
     def build_request(self, url, method="GET", data=None):
