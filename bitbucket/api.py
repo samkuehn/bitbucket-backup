@@ -82,8 +82,6 @@ class BitBucket(object):
             import oauthlib.oauth1
             client = oauthlib.oauth1.Client('self.oauth_key', client_secret=self.oauth_secret)
             uri, headers, body = client.sign(url)
-            print uri
-            print headers
             request = Request(url, data, headers)
             request.get_method = lambda: method
             return request
