@@ -27,6 +27,7 @@ You can backup a team's repositories instead of your own by supplying the option
 
 ## OAuth authentication
 You can use OAuth authentication if you do not want to use username/password. There are 3 steps to using OAuth.
+
 1. Create OAuth consumer keys here: `https://bitbucket.org/account/user/<username>/api`
 2. Make sure that your consumer has the following permissions:
     - Account: Read
