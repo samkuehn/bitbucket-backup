@@ -2,6 +2,7 @@
 import argparse
 import datetime
 import os
+import subprocess
 import sys
 from getpass import getpass
 
@@ -61,7 +62,7 @@ def exec_cmd(command):
             command = "%s > nul 2> nul" % command
         else:
             command = "%s > /dev/null 2>&1" % command
-    resp = os.system(command)
+    resp = subprocess.call(command, shell=True)
     if resp != 0:
         exit("Command [%s] failed" % command, resp)
 
