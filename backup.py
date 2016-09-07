@@ -23,6 +23,11 @@ try:
 except NameError:
     pass
 
+try:
+    _range = xrange
+except NameError:
+    _range = range
+
 _verbose = False
 _quiet = False
 
@@ -201,7 +206,7 @@ def main():
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
 
-            for attempt in xrange(1, max_attempts + 1):
+            for attempt in range(1, max_attempts + 1):
                 try:
                     if not os.path.isdir(backup_dir):
                         clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
