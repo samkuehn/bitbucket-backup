@@ -50,7 +50,7 @@ def exit(message, code=1):
     sys.exit(code)
 
 
-def exec_cmd(command):
+def exec_cmd(command, exit_on_failure=True):
     """
     Executes an external command taking into account errors and logging.
     """
@@ -63,7 +63,9 @@ def exec_cmd(command):
             command = "%s > /dev/null 2>&1" % command
     resp = os.system(command)
     if resp != 0:
-        exit("Command [%s] failed" % command, resp)
+        if exit_on_failure:
+            exit("Command [%s] failed" % command, resp)
+    return resp
 
 
 def compress(repo, location):
@@ -115,16 +117,18 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
 
 def update_repo(repo, backup_dir, with_wiki=False):
     scm = repo.get('scm')
-    command = None
     os.chdir(backup_dir)
-    if scm == 'hg':
-        command = 'hg pull -u'
-    if scm == 'git':
-        command = 'git remote update & git pull --all'
-    if not command:
-        exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
-    exec_cmd(command)
+    if scm == 'hg':
+        exec_cmd('hg pull -u')
+    elif scm == 'git':
+        exec_cmd('git remote update')
+        if not exec_cmd('git ls-remote --exit-code', False):
+            exec_cmd('git pull --all')
+        else:
+            debug("No reference in %s, empty repository ?" % repo.get('name'))
+    else:
+        exit("could not build command (scm [%s] not recognized?)" % scm)
     wiki_dir = "%s_wiki" % backup_dir
     if with_wiki and repo.get('has_wiki') and os.path.isdir(wiki_dir):
         os.chdir(wiki_dir)
