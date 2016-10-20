@@ -2,7 +2,6 @@
 import argparse
 import datetime
 import os
-import subprocess
 import sys
 from getpass import getpass
 
@@ -22,11 +21,6 @@ try:
     input = raw_input
 except NameError:
     pass
-
-try:
-    _range = xrange
-except NameError:
-    _range = range
 
 _verbose = False
 _quiet = False
@@ -56,7 +50,7 @@ def exit(message, code=1):
     sys.exit(code)
 
 
-def exec_cmd(command):
+def exec_cmd(command, exit_on_failure=True):
     """
     Executes an external command taking into account errors and logging.
     """
@@ -67,9 +61,11 @@ def exec_cmd(command):
             command = "%s > nul 2> nul" % command
         else:
             command = "%s > /dev/null 2>&1" % command
-    resp = subprocess.call(command, shell=True)
+    resp = os.system(command)
     if resp != 0:
-        exit("Command [%s] failed" % command, resp)
+        if exit_on_failure:
+            exit("Command [%s] failed" % command, resp)
+    return resp
 
 
 def compress(repo, location):
@@ -114,6 +110,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
     exec_cmd('%s "%s"' % (command, backup_dir))
+    branch_pull(repo, backup_dir, True)
     if with_wiki and repo.get('has_wiki'):
         debug("Cloning %s's Wiki..." % repo.get('name'))
         exec_cmd("%s/wiki %s_wiki" % (command, backup_dir))
@@ -121,21 +118,73 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
 
 def update_repo(repo, backup_dir, with_wiki=False):
     scm = repo.get('scm')
-    command = None
     os.chdir(backup_dir)
+    debug("Updating %s..." % repo.get('name'))
     if scm == 'hg':
         command = 'hg pull -u'
     if scm == 'git':
-        command = 'git remote update'
+        command = 'git remote update --prune'
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
     exec_cmd(command)
+    branch_pull(repo, backup_dir)
     wiki_dir = "%s_wiki" % backup_dir
     if with_wiki and repo.get('has_wiki') and os.path.isdir(wiki_dir):
         os.chdir(wiki_dir)
         debug("Updating %s's Wiki..." % repo.get('name'))
         exec_cmd(command)
+
+
+def branch_pull(repo, backup_dir, initial=False):
+    scm = repo.get('scm')
+    if scm == 'git':
+        os.chdir(backup_dir)
+        command = "git branch -r"
+        res = os.popen(command).read()
+        branch_all = remote_branch_cleanup(res)
+        for branch in branch_all:
+            if initial is True:
+                if branch == 'master':
+                    continue
+                command = 'git checkout ' + branch
+                exec_cmd(command)
+            else:
+                if branch == 'master':
+                    command = 'git pull'
+                    exec_cmd(command)
+                else:
+                    command = 'git checkout ' + branch
+                    exec_cmd(command)
+                    command = 'git pull'
+                    exec_cmd(command)
+        exec_cmd('git checkout master')
+        if initial is False:
+            local_branch_prune(repo, backup_dir)
+
+
+def local_branch_prune(repo, backup_dir):
+    scm = repo.get('scm')
+    if scm == 'git':
+        os.chdir(backup_dir)
+        command = "git branch -r"
+        res = os.popen(command).read()
+        branch_remote = remote_branch_cleanup(res)
+        res = os.popen('git branch').read()
+        branch_local = res.split()
+        branch_local.remove('*')
+        toPrune = list(set(branch_local) - set(branch_remote))
+        for x in toPrune:
+            command = 'git branch -D ' + x
+            exec_cmd(command)
+
+
+def remote_branch_cleanup(branch_list):
+    branch_all = branch_list.split()
+    branch_all.remove('origin/HEAD')
+    branch_all.remove('->')
+    return [branch.replace('origin/', '') for branch in branch_all]
+
 
 
 def main():
@@ -206,7 +255,7 @@ def main():
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
 
-            for attempt in range(1, max_attempts + 1):
+            for attempt in xrange(1, max_attempts + 1):
                 try:
                     if not os.path.isdir(backup_dir):
                         clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
