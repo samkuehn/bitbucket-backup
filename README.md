@@ -17,7 +17,7 @@ pip install https://github.com/samkuehn/bitbucket-backup/archive/master.zip
 ## Quickstart
 ```bash
 bitbucket-backup [-u <bitbucket_username>] [-p <bitbucket_password>] [-k <oauth_key>] [-s <oauth_secret>]
-  [-l <local_backup_location>] [-t <bitbucket_team>] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
+  [-l <local_backup_location>] [-t <bitbucket_team>] [-a] [-v] [-q] [-c] [--http] [--skip-password] [--mirror]
   [--prune]
 ```
 Username/password, or OAuth credentials, are needed to access the bitbucket api to get a repo listing.
