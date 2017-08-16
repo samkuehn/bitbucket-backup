@@ -23,6 +23,11 @@ try:
 except NameError:
     pass
 
+try:
+    _range = xrange
+except NameError:
+    _range = range
+
 _verbose = False
 _quiet = False
 
@@ -116,7 +121,7 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         exec_cmd("%s/wiki %s_wiki" % (command, backup_dir))
 
 
-def update_repo(repo, backup_dir, with_wiki=False):
+def update_repo(repo, backup_dir, with_wiki=False, prune=False):
     scm = repo.get('scm')
     command = None
     os.chdir(backup_dir)
@@ -124,6 +129,8 @@ def update_repo(repo, backup_dir, with_wiki=False):
         command = 'hg pull -u'
     if scm == 'git':
         command = 'git remote update'
+        if prune:
+            command = '%s %s' % (command, '--prune')
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
@@ -151,6 +158,7 @@ def main():
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
+    parser.add_argument('--prune', dest="prune", action='store_true', help="Prune repo on remote update")
     parser.add_argument('--ignore-repo-list', dest='ignore_repo_list', nargs='+', type=str, help="specify list of repo slug names to skip")
     args = parser.parse_args()
     location = args.location
@@ -203,13 +211,13 @@ def main():
             debug("Backing up [%s]..." % repo.get("name"), True)
             backup_dir = os.path.join(location, repo.get("slug"))
 
-            for attempt in xrange(1, max_attempts + 1):
+            for attempt in range(1, max_attempts + 1):
                 try:
                     if not os.path.isdir(backup_dir):
                         clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
                     else:
                         debug("Repository [%s] already in place, just updating..." % repo.get("name"))
-                        update_repo(repo, backup_dir, with_wiki=_with_wiki)
+                        update_repo(repo, backup_dir, with_wiki=_with_wiki, prune=args.prune)
                 except:
                     if attempt == max_attempts:
                         raise MaxBackupAttemptsReached("repo [%s] is reached maximum number [%d] of backup tries" % (repo.get("name"), attempt))
