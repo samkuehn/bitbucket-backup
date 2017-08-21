@@ -169,6 +169,7 @@ def main():
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
+    parser.add_argument('--modified-days', dest="modifiedDays", help="Skip all repositories not modified since days ago")
     parser.add_argument('--prune', dest="prune", action='store_true', help="Prune repo on remote update")
     parser.add_argument('--ignore-repo-list', dest='ignore_repo_list', nargs='+', type=str, help="specify list of repo slug names to skip")
     args = parser.parse_args()
@@ -177,6 +178,7 @@ def main():
     password = args.password
     oauth_key = args.oauth_key
     oauth_secret = args.oauth_secret
+    modifiedDays = int(args.modifiedDays)
     http = args.http
     max_attempts = args.attempts
     global _quiet
@@ -216,6 +218,13 @@ def main():
         if not repos:
             print("No repositories found. Are you sure you provided the correct password")
         for repo in repos:
+            if modifiedDays > 0:
+                lastModified = datetime.datetime.strptime(repo.get("utc_last_updated"), "%Y-%m-%d %H:%M:%S+00:00")
+                modifiedSince = datetime.datetime.now() - datetime.timedelta(days=modifiedDays)
+                if lastModified < modifiedSince:
+                    debug("ignoring repo %s with lastModified: %s" % (repo.get("name"), lastModified))
+                    continue
+
             if args.ignore_repo_list and repo.get("slug") in args.ignore_repo_list:
                 debug("ignoring repo %s with slug: %s" % (repo.get("name"), repo.get("slug")))
                 continue
