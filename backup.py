@@ -178,7 +178,10 @@ def main():
     password = args.password
     oauth_key = args.oauth_key
     oauth_secret = args.oauth_secret
-    modifiedDays = int(args.modifiedDays)
+    if args.modifiedDays:
+        modifiedDays = int(args.modifiedDays)
+    else:
+        modifiedDays = False
     http = args.http
     max_attempts = args.attempts
     global _quiet
