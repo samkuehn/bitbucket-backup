@@ -56,7 +56,7 @@ def exit(message, code=1):
     sys.exit(code)
 
 
-def exec_cmd(command):
+def exec_cmd(command, stop_on_error=True):
     """
     Executes an external command taking into account errors and logging.
     """
@@ -69,7 +69,10 @@ def exec_cmd(command):
             command = "%s > /dev/null 2>&1" % command
     resp = subprocess.call(command, shell=True)
     if resp != 0:
-        exit("Command [%s] failed" % command, resp)
+        if stop_on_error:
+          exit("Command [%s] failed" % command, resp)
+        else:
+          debug("Command [%s] failed: %s" % (command, resp))
 
 
 def compress(repo, location):
@@ -89,7 +92,7 @@ def fetch_lfs_content(backup_dir):
     debug("Fetching LFS content...")
     os.chdir(backup_dir)
     command = 'git lfs fetch --all'
-    exec_cmd(command)
+    exec_cmd(command, stop_on_error=False)
 
 def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wiki=False, fetch_lfs=False):
     global _quiet, _verbose
