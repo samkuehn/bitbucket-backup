@@ -56,7 +56,7 @@ def exit(message, code=1):
     sys.exit(code)
 
 
-def exec_cmd(command):
+def exec_cmd(command, stop_on_error=True):
     """
     Executes an external command taking into account errors and logging.
     """
@@ -69,7 +69,10 @@ def exec_cmd(command):
             command = "%s > /dev/null 2>&1" % command
     resp = subprocess.call(command, shell=True)
     if resp != 0:
-        exit("Command [%s] failed" % command, resp)
+        if stop_on_error:
+          exit("Command [%s] failed" % command, resp)
+        else:
+          debug("Command [%s] failed: %s" % (command, resp))
 
 
 def compress(repo, location):
@@ -85,8 +88,13 @@ def compress(repo, location):
         if os.path.isdir(path):
             exec_cmd("rm -rfv %s" % path)
 
+def fetch_lfs_content(backup_dir):
+    debug("Fetching LFS content...")
+    os.chdir(backup_dir)
+    command = 'git lfs fetch --all'
+    exec_cmd(command, stop_on_error=False)
 
-def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wiki=False):
+def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wiki=False, fetch_lfs=False):
     global _quiet, _verbose
     scm = repo.get('scm')
     slug = repo.get('slug')
@@ -114,12 +122,14 @@ def clone_repo(repo, backup_dir, http, username, password, mirror=False, with_wi
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Cloning %s..." % repo.get('name'))
     exec_cmd('%s "%s"' % (command, backup_dir))
+    if scm == 'git' and fetch_lfs:
+        fetch_lfs_content(backup_dir)
     if with_wiki and repo.get('has_wiki'):
         debug("Cloning %s's Wiki..." % repo.get('name'))
         exec_cmd("%s/wiki %s_wiki" % (command, backup_dir))
 
 
-def update_repo(repo, backup_dir, with_wiki=False, prune=False):
+def update_repo(repo, backup_dir, with_wiki=False, prune=False, fetch_lfs=False):
     scm = repo.get('scm')
     command = None
     os.chdir(backup_dir)
@@ -133,6 +143,8 @@ def update_repo(repo, backup_dir, with_wiki=False, prune=False):
         exit("could not build command (scm [%s] not recognized?)" % scm)
     debug("Updating %s..." % repo.get('name'))
     exec_cmd(command)
+    if scm == 'git' and fetch_lfs:
+        fetch_lfs_content(backup_dir)
     wiki_dir = "%s_wiki" % backup_dir
     if with_wiki and repo.get('has_wiki') and os.path.isdir(wiki_dir):
         os.chdir(wiki_dir)
@@ -153,6 +165,7 @@ def main():
     parser.add_argument("-c", "--compress", action='store_true', dest="compress", help="Creates a compressed file with all cloned repositories (cleans up location directory)")
     parser.add_argument("-a", "--attempts", dest="attempts", type=int, default=1, help="max. number of attempts to backup repository")
     parser.add_argument('--mirror', action='store_true', help="Clone just bare repositories with git clone --mirror (git only)")
+    parser.add_argument('--fetchlfs', action='store_true', help="Fetch LFS content after clone/pull (git only)")
     parser.add_argument('--with-wiki', dest="with_wiki", action='store_true', help="Includes wiki")
     parser.add_argument('--http', action='store_true', help="Fetch via https instead of SSH")
     parser.add_argument('--skip-password', dest="skip_password", action='store_true', help="Ignores password prompting if no password is provided (for public repositories)")
@@ -171,6 +184,7 @@ def main():
     global _verbose
     _verbose = args.verbose
     _mirror = args.mirror
+    _fetchlfs = args.fetchlfs
     _with_wiki = args.with_wiki
     if _quiet:
         _verbose = False  # override in case both are selected
@@ -212,10 +226,10 @@ def main():
             for attempt in range(1, max_attempts + 1):
                 try:
                     if not os.path.isdir(backup_dir):
-                        clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki)
+                        clone_repo(repo, backup_dir, http, username, password, mirror=_mirror, with_wiki=_with_wiki, fetch_lfs=_fetchlfs)
                     else:
                         debug("Repository [%s] already in place, just updating..." % repo.get("name"))
-                        update_repo(repo, backup_dir, with_wiki=_with_wiki, prune=args.prune)
+                        update_repo(repo, backup_dir, with_wiki=_with_wiki, prune=args.prune, fetch_lfs=_fetchlfs)
                 except:
                     if attempt == max_attempts:
                         raise MaxBackupAttemptsReached("repo [%s] is reached maximum number [%d] of backup tries" % (repo.get("name"), attempt))
