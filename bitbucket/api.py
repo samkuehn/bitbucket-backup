@@ -25,10 +25,10 @@ try:
 except ImportError:
     import simplejson as json
 
-__all__ = ['AuthenticationRequired', 'to_datetime', 'BitBucket']
+__all__ = ["AuthenticationRequired", "to_datetime", "BitBucket"]
 
-api_toplevel = 'https://api.bitbucket.org/'
-api_base = '%s1.0/' % api_toplevel
+api_toplevel = "https://api.bitbucket.org/"
+api_base = "%s1.0/" % api_toplevel
 
 
 class AuthenticationRequired(Exception):
@@ -38,11 +38,12 @@ class AuthenticationRequired(Exception):
 def requires_authentication(method):
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        username = self.bb.username if hasattr(self, 'bb') else self.username
-        password = self.bb.password if hasattr(self, 'bb') else self.password
+        username = self.bb.username if hasattr(self, "bb") else self.username
+        password = self.bb.password if hasattr(self, "bb") else self.password
         if not all((username, password)):
             raise AuthenticationRequired("%s requires authentication" % method.__name__)
         return method(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -54,23 +55,24 @@ def smart_encode(**kwargs):
         if v is None:
             del args[k]
     if not args:
-        return ''
+        return ""
     return urlencode(args)
 
 
 def to_datetime(timestring):
     """Convert one of the bitbucket API's timestamps to a datetime object."""
-    format = '%Y-%m-%d %H:%M:%S'
-    timestring = timestring.split('+')[0].strip()
+    format = "%Y-%m-%d %H:%M:%S"
+    timestring = timestring.split("+")[0].strip()
     return datetime.datetime(*time.strptime(timestring, format)[:7])
 
 
 class BitBucket(object):
-
     """Main bitbucket class.  Use an instantiated version of this class
     to make calls against the REST API."""
 
-    def __init__(self, username='', password='', oauth_key='', oauth_secret='', verbose=False):
+    def __init__(
+        self, username="", password="", oauth_key="", oauth_secret="", verbose=False
+    ):
         self.username = username
         self.password = password
         self.oauth_key = oauth_key
@@ -83,15 +85,23 @@ class BitBucket(object):
                 import oauthlib.oauth1
             except ImportError:
                 import sys
-                print("You must install oauthlib if you want to use oauth `pip install oauthlib`")
+
+                print(
+                    "You must install oauthlib if you want to use oauth `pip install oauthlib`"
+                )
                 sys.exit(0)
-            client = oauthlib.oauth1.Client(self.oauth_key, client_secret=self.oauth_secret)
+            client = oauthlib.oauth1.Client(
+                self.oauth_key, client_secret=self.oauth_secret
+            )
             uri, headers, body = client.sign(url)
             request = Request(url, data, headers)
             return request
         if all((self.username, self.password)):
-            auth = '%s:%s' % (self.username, self.password)
-            auth = {'Authorization': 'Basic %s' % (base64.b64encode(auth.encode("utf_8")).decode("utf_8").strip())}
+            auth = "%s:%s" % (self.username, self.password)
+            auth = {
+                "Authorization": "Basic %s"
+                % (base64.b64encode(auth.encode("utf_8")).decode("utf_8").strip())
+            }
             request = Request(url, data, auth)
             request.get_method = lambda: method
             return request
@@ -112,23 +122,22 @@ class BitBucket(object):
     @requires_authentication
     def emails(self):
         """Returns a list of configured email addresses for the authenticated user."""
-        url = api_base + 'emails/'
+        url = api_base + "emails/"
         return json.loads(self.load_url(url))
 
     @requires_authentication
     def create_repo(self, repo_data):
-        url = api_base + 'repositories/'
+        url = api_base + "repositories/"
         return json.loads(self.load_url(url, method="POST", data=urlencode(repo_data)))
 
     def __repr__(self):
-        extra = ''
+        extra = ""
         if all((self.username, self.password)):
-            extra = ' (auth: %s)' % self.username
-        return '<BitBucket API%s>' % extra
+            extra = " (auth: %s)" % self.username
+        return "<BitBucket API%s>" % extra
 
 
 class User(object):
-
     """API encapsulation for user related bitbucket queries."""
 
     def __init__(self, bb, username):
@@ -137,15 +146,14 @@ class User(object):
 
     def repositories(self):
         user_data = self.get()
-        return user_data['repositories']
+        return user_data["repositories"]
 
     def get(self):
         if self.username is None:
-            url = api_base + 'user/'
+            url = api_base + "user/"
         else:
-            url = api_base + 'users/%s/' % self.username
-        return json.loads(self.bb.load_url(url).decode('utf-8'))
+            url = api_base + "users/%s/" % self.username
+        return json.loads(self.bb.load_url(url).decode("utf-8"))
 
     def __repr__(self):
-        return '<User: %s>' % self.username
-
+        return "<User: %s>" % self.username
