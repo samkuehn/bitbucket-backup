@@ -6,7 +6,7 @@ import subprocess
 import sys
 from getpass import getpass
 
-import bitbucket
+from client import get_repositories
 
 try:
     from urllib.error import HTTPError, URLError
@@ -83,7 +83,10 @@ def compress(repo, location):
     debug("Compressing repositories in [%s]..." % location, True)
     exec_cmd(
         "tar -zcvf bitbucket-backup-%s-%s.tar.gz `ls -d *`"
-        % (repo.get("owner"), datetime.datetime.now().strftime("%Y%m%d%H%m%s"))
+        % (
+            repo.get("owner").get("username") or repo.get("owner").get("nickname"),
+            datetime.datetime.now().strftime("%Y%m%d%H%m%s"),
+        )
     )
     debug("Cleaning up...", True)
     for d in os.listdir(location):
@@ -100,20 +103,19 @@ def fetch_lfs_content(backup_dir):
 
 
 def clone_repo(
-    repo,
-    backup_dir,
-    http,
-    username,
-    password,
-    mirror=False,
-    with_wiki=False,
-    fetch_lfs=False,
+        repo,
+        backup_dir,
+        http,
+        username,
+        password,
+        mirror=False,
+        with_wiki=False,
+        fetch_lfs=False,
 ):
     global _quiet, _verbose
     scm = repo.get("scm")
     slug = repo.get("slug")
-    owner = repo.get("owner")
-
+    owner = repo.get("owner").get("username") or repo.get("owner").get("nickname")
     owner_url = quote(owner)
     if http and not all((username, password)):
         exit("Cannot backup via http without username and password" % scm)
@@ -185,12 +187,6 @@ def main():
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")
     parser.add_argument("-u", "--username", dest="username", help="Bitbucket username")
     parser.add_argument("-p", "--password", dest="password", help="Bitbucket password")
-    parser.add_argument(
-        "-k", "--oauth-key", dest="oauth_key", help="Bitbucket oauth key"
-    )
-    parser.add_argument(
-        "-s", "--oauth-secret", dest="oauth_secret", help="Bitbucket oauth secret"
-    )
     parser.add_argument("-t", "--team", dest="team", help="Bitbucket team")
     parser.add_argument(
         "-l", "--location", dest="location", help="Local backup location"
@@ -256,8 +252,6 @@ def main():
     location = args.location
     username = args.username
     password = args.password
-    oauth_key = args.oauth_key
-    oauth_secret = args.oauth_secret
     http = args.http
     max_attempts = args.attempts
     global _quiet
@@ -269,31 +263,20 @@ def main():
     _with_wiki = args.with_wiki
     if _quiet:
         _verbose = False  # override in case both are selected
+    team = args.team
 
-    if all((oauth_key, oauth_secret)):
-        owner = args.team if args.team else username
-    else:
-        if not username:
-            username = input("Enter bitbucket username: ")
-        owner = args.team if args.team else username
-        if not password:
-            if not args.skip_password:
-                password = getpass(prompt="Enter your bitbucket password: ")
+    if not username:
+        username = input("Enter bitbucket username: ")
+    if not password:
+        password = getpass(prompt="Enter your bitbucket password: ")
     if not location:
         location = input("Enter local location to backup to: ")
     location = os.path.abspath(location)
 
     # ok to proceed
     try:
-        bb = bitbucket.BitBucket(
-            username=username,
-            password=password,
-            oauth_key=oauth_key,
-            oauth_secret=oauth_secret,
-            verbose=_verbose,
-        )
-        user = bb.user(owner)
-        repos = sorted(user.repositories(), key=lambda repo: repo.get("name"))
+        repos = get_repositories(username=username, password=password, team=team)
+        repos = sorted(repos, key=lambda repo_: repo_.get("name"))
         if not repos:
             print(
                 "No repositories found. Are you sure you provided the correct password"
