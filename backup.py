@@ -8,9 +8,14 @@ import sys
 from getpass import getpass
 
 try:
-    from urllib.error import Request, HTTPError, URLError, urlopen
+    from urllib.error import HTTPError, URLError
 except ImportError:
-    from urllib2 import Request, HTTPError, URLError, urlopen
+    from urllib2 import HTTPError, URLError
+
+try:
+    from urllib.request import Request, urlopen
+except ImportError:
+    from urllib2 import Request, urlopen
 
 try:
     from urllib.parse import quote
