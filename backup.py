@@ -121,7 +121,7 @@ def get_repositories(method="GET", username=None, password=None, team=None, data
     }
     request = Request(url, data, header)
     request.get_method = lambda: method
-    result = urlopen(request).read()
+    result = urlopen(request).read().decode("utf-8")
     repos_data = json.loads(result)
     repos = []
     for repo in repos_data.get("values"):
