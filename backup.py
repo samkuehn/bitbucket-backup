@@ -180,7 +180,7 @@ def clone_repo(
             command = "%s git@bitbucket.org:%s/%s.git" % (
                 git_command,
                 owner_url,
-                slug_url,
+                quote(username),
             )
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
