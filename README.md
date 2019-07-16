@@ -11,7 +11,7 @@ an `git remote update` will be run for git repos.
 ## Installation
 
 ```bash
-pip install https://github.com/samkuehn/bitbucket-backup/archive/master.zip
+pip install -u https://github.com/samkuehn/bitbucket-backup/archive/master.zip
 ```
 
 ## Quickstart
@@ -30,6 +30,19 @@ You can backup a team's repositories instead of your own by supplying the option
 If would like, you can use app passwords instead of your password used to login to Bitbucket.
 The password must have read repositories permission.
 <https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html>
+
+## OAuth authentication
+
+You can use OAuth authentication if you do not want to use username/password. There are 4 steps to using OAuth.
+
+1. Create OAuth consumer keys here: https://bitbucket.org/account/user/{username}/api
+2. Make sure that your consumer has the following permissions:
+    * Account: Read
+    * Projects: Read
+    * Repositories: Read
+3. Specify the -k <oauth_key> -s <oauth_secret> flags
+4. Make sure requests-oauthlib is installed `pip install requests-oauthlib`
+
 
 ## Requirements
 

@@ -1,21 +1,13 @@
 #!/usr/bin/env python
 import argparse
-import base64
 import datetime
 import os
 import subprocess
 import sys
 from getpass import getpass
 
-try:
-    from urllib.error import HTTPError, URLError
-except ImportError:
-    from urllib2 import HTTPError, URLError
-
-try:
-    from urllib.request import Request, urlopen
-except ImportError:
-    from urllib2 import Request, urlopen
+import requests
+from requests.auth import HTTPBasicAuth
 
 try:
     from urllib.parse import quote
@@ -26,11 +18,6 @@ try:
     input = raw_input
 except NameError:
     pass
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 try:
     _range = xrange
@@ -111,39 +98,57 @@ def fetch_lfs_content(backup_dir):
     exec_cmd(command, stop_on_error=False)
 
 
-def get_repositories(method="GET", username=None, password=None, team=None, data=None):
-    url = "https://api.bitbucket.org/2.0/repositories/{}/".format(team or username)
-
-    header = "%s:%s" % (username, password)
-    header = {
-        "Authorization": "Basic %s"
-        % (base64.b64encode(header.encode("utf_8")).decode("utf_8").strip())
-    }
-    request = Request(url, data, header)
-    request.get_method = lambda: method
-    result = urlopen(request).read().decode("utf-8")
-    repos_data = json.loads(result)
+def get_repositories(
+        username=None, password=None, oauth_key=None, oauth_secret=None, team=None
+):
+    auth = None
     repos = []
-    for repo in repos_data.get("values"):
-        repos.append(repo)
-    while repos_data.get("next"):
-        request = Request(repos_data.get("next"), data, header)
-        result = urlopen(request).read().decode("utf-8")
-        repos_data = json.loads(result)
+    try:
+        if all((oauth_key, oauth_secret)):
+            from requests_oauthlib import OAuth1
+            auth = OAuth1(oauth_key, oauth_secret)
+        if all((username, password)):
+            auth = HTTPBasicAuth(username, password)
+        if auth is None:
+            exit("Must provide username/password or oath credentials")
+        if not team or username:
+            response = requests.get("https://api.bitbucket.org/2.0/user/", auth=auth)
+            username = response.json().get("username")
+        url = "https://api.bitbucket.org/2.0/repositories/{}/".format(team or username)
+
+        response = requests.get(url, auth=auth)
+        response.raise_for_status()
+        repos_data = response.json()
         for repo in repos_data.get("values"):
             repos.append(repo)
+        while repos_data.get("next"):
+            response = requests.get(repos_data.get("next"), auth=auth)
+            repos_data = response.json()
+            for repo in repos_data.get("values"):
+                repos.append(repo)
+    except requests.exceptions.RequestException as e:
+
+        if e.response.status_code == 401:
+            exit(
+                "Unauthorized! Check your credentials and try again.", 22
+            )  # EINVAL - Invalid argument
+        else:
+            exit(
+                "Connection Error! Bitbucket returned HTTP error [%s]."
+                % e.response.status_code
+            )
     return repos
 
 
 def clone_repo(
-    repo,
-    backup_dir,
-    http,
-    username,
-    password,
-    mirror=False,
-    with_wiki=False,
-    fetch_lfs=False,
+        repo,
+        backup_dir,
+        http,
+        username,
+        password,
+        mirror=False,
+        with_wiki=False,
+        fetch_lfs=False,
 ):
     global _quiet, _verbose
     scm = repo.get("scm")
@@ -180,7 +185,7 @@ def clone_repo(
             command = "%s git@bitbucket.org:%s/%s.git" % (
                 git_command,
                 owner_url,
-                quote(username),
+                slug_url,
             )
     if not command:
         exit("could not build command (scm [%s] not recognized?)" % scm)
@@ -220,6 +225,12 @@ def main():
     parser = argparse.ArgumentParser(description="Usage: %prog [options] ")
     parser.add_argument("-u", "--username", dest="username", help="Bitbucket username")
     parser.add_argument("-p", "--password", dest="password", help="Bitbucket password")
+    parser.add_argument(
+        "-k", "--oauth-key", dest="oauth_key", help="Bitbucket oauth key"
+    )
+    parser.add_argument(
+        "-s", "--oauth-secret", dest="oauth_secret", help="Bitbucket oauth secret"
+    )
     parser.add_argument("-t", "--team", dest="team", help="Bitbucket team")
     parser.add_argument(
         "-l", "--location", dest="location", help="Local backup location"
@@ -285,6 +296,8 @@ def main():
     location = args.location
     username = args.username
     password = args.password
+    oauth_key = args.oauth_key
+    oauth_secret = args.oauth_secret
     http = args.http
     max_attempts = args.attempts
     global _quiet
@@ -298,17 +311,24 @@ def main():
         _verbose = False  # override in case both are selected
     team = args.team
 
-    if not username:
-        username = input("Enter bitbucket username: ")
-    if not password:
-        password = getpass(prompt="Enter your bitbucket password: ")
+    if not all((oauth_key, oauth_secret)):
+        if not username:
+            username = input("Enter bitbucket username: ")
+        if not password:
+            password = getpass(prompt="Enter your bitbucket password: ")
     if not location:
         location = input("Enter local location to backup to: ")
     location = os.path.abspath(location)
 
     # ok to proceed
     try:
-        repos = get_repositories(username=username, password=password, team=team)
+        repos = get_repositories(
+            username=username,
+            password=password,
+            oauth_key=oauth_key,
+            oauth_secret=oauth_secret,
+            team=team,
+        )
         repos = sorted(repos, key=lambda repo_: repo_.get("name"))
         if not repos:
             print(
@@ -366,17 +386,6 @@ def main():
         if args.compress:
             compress(repo, location)
         debug("Finished!", True)
-    except HTTPError as err:
-        if err.code == 401:
-            exit(
-                "Unauthorized! Check your credentials and try again.", 22
-            )  # EINVAL - Invalid argument
-        else:
-            exit("Connection Error! Bitbucket returned HTTP error [%s]." % err.code)
-    except URLError as e:
-        exit(
-            "Unable to reach Bitbucket: %s." % e.reason, 101
-        )  # ENETUNREACH - Network is unreachable
     except (KeyboardInterrupt, SystemExit):
         exit(
             "Operation cancelled. There might be inconsistent data in location directory.",
