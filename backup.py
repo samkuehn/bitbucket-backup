@@ -296,12 +296,20 @@ def main():
         type=str,
         help="specify list of repo slug names to skip",
     )
+    parser.add_argument(
+        "--only-repos",
+        dest="repo_whitelist",
+        nargs="+",
+        type=str,
+        help="specify list of repo slug names to download",
+    )
     args = parser.parse_args()
     location = args.location
     username = args.username
     password = args.password
     oauth_key = args.oauth_key
     oauth_secret = args.oauth_secret
+    repo_whitelist = args.repo_whitelist
     http = args.http
     max_attempts = args.attempts
     global _quiet
@@ -346,6 +354,13 @@ def main():
                 dir_list.append(repo.get("slug") + "_wiki")
 
             if args.ignore_repo_list and repo.get("slug") in args.ignore_repo_list:
+                debug(
+                    "ignoring repo %s with slug: %s"
+                    % (repo.get("name"), repo.get("slug"))
+                )
+                continue
+
+            if repo_whitelist and len(repo_whitelist) != 0 and repo.get("slug") not in repo_whitelist:
                 debug(
                     "ignoring repo %s with slug: %s"
                     % (repo.get("name"), repo.get("slug"))
