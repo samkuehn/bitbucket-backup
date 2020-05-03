@@ -100,13 +100,14 @@ def fetch_lfs_content(backup_dir):
 
 
 def get_repositories(
-        username=None, password=None, oauth_key=None, oauth_secret=None, team=None
+    username=None, password=None, oauth_key=None, oauth_secret=None, team=None
 ):
     auth = None
     repos = []
     try:
         if all((oauth_key, oauth_secret)):
             from requests_oauthlib import OAuth1
+
             auth = OAuth1(oauth_key, oauth_secret)
         if all((username, password)):
             auth = HTTPBasicAuth(username, password)
@@ -142,14 +143,14 @@ def get_repositories(
 
 
 def clone_repo(
-        repo,
-        backup_dir,
-        http,
-        username,
-        password,
-        mirror=False,
-        with_wiki=False,
-        fetch_lfs=False,
+    repo,
+    backup_dir,
+    http,
+    username,
+    password,
+    mirror=False,
+    with_wiki=False,
+    fetch_lfs=False,
 ):
     global _quiet, _verbose
     scm = repo.get("scm")
@@ -287,7 +288,10 @@ def main():
         "--prune", dest="prune", action="store_true", help="Prune repo on remote update"
     )
     parser.add_argument(
-        "--delete-extraneous", dest="delete_extraneous", action="store_true", help="Delete extraneous repositories from backup"
+        "--delete-extraneous",
+        dest="delete_extraneous",
+        action="store_true",
+        help="Delete extraneous repositories from backup",
     )
     parser.add_argument(
         "--ignore-repo-list",
@@ -342,7 +346,7 @@ def main():
             )
         for repo in repos:
             dir_list.append(repo.get("slug"))
-            if repo.get('has_wiki'):
+            if repo.get("has_wiki"):
                 dir_list.append(repo.get("slug") + "_wiki")
 
             if args.ignore_repo_list and repo.get("slug") in args.ignore_repo_list:
@@ -394,7 +398,11 @@ def main():
                     break
 
         for dir in os.listdir(location):
-            if _delete_extraneous and os.path.isdir(os.path.join(location, dir)) and not dir in dir_list:
+            if (
+                _delete_extraneous
+                and os.path.isdir(os.path.join(location, dir))
+                and not dir in dir_list
+            ):
                 debug("Removing repository [%s]..." % dir, True)
                 shutil.rmtree(os.path.join(location, dir))
 
