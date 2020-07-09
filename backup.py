@@ -364,7 +364,11 @@ def main():
                 )
                 continue
 
-            if repo_whitelist and len(repo_whitelist) != 0 and repo.get("slug") not in repo_whitelist:
+            if (
+                repo_whitelist
+                and len(repo_whitelist) != 0
+                and repo.get("slug") not in repo_whitelist
+            ):
                 debug(
                     "ignoring repo %s with slug: %s"
                     % (repo.get("name"), repo.get("slug"))
