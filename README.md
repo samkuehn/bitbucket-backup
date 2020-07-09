@@ -24,7 +24,8 @@ Username/password are needed to access the Bitbucket API to get a repo listing.
 At this time it is not used to do the clone/update.
 Clone/update requires that your SSH keys have been uploaded to Bitbucket.
 
-You can backup a team's repositories instead of your own by supplying the optional `-t` parameter.
+You can backup a team's repositories instead of your own by supplying the optional `-t` parameter
+and entering the team slug (this is now called a "Workspace" by BitBucket).
 
 ## App passwords
 If would like, you can use app passwords instead of your password used to login to Bitbucket.
